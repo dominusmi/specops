@@ -50,6 +50,9 @@ fn player_direction(
     transform.rotate(Quat::from_axis_angle(Vec3::new(0.,0.,1.), angle));
 }
 
+fn forward(transform: &Transform) -> Vec3 {
+    return transform.rotation * Vec3::new(0., 1., 0.)
+}
 
 fn player_movement(
     mut player_query: Query<(&Player, &mut Transform)>,
@@ -57,22 +60,34 @@ fn player_movement(
     time: Res<Time>
 ){
     let (player, mut transform): (&Player, Mut<Transform>) = player_query.single_mut();
-    let move_dir = transform.rotation * Vec3::new(0., 1., 0.);
 
-    if keyboard.pressed(KeyCode::W) {
-        transform.translation += player.speed * time.delta_seconds() * TILE_SIZE * move_dir;
+    let mut move_dir = transform.rotation * Vec3::new(0., 0., 0.);
+    let mut move_requested = false;
+
+    if keyboard.pressed(KeyCode::W){
+        move_dir = forward(&transform);
+        move_requested = true;
     }
-    if keyboard.pressed(KeyCode::S){
-        transform.translation -= player.speed * time.delta_seconds() * TILE_SIZE * move_dir;
+    else if keyboard.pressed(KeyCode::S){
+        move_dir = forward(&transform) * -1.;
+        move_requested = true;
+
     }
     if keyboard.pressed(KeyCode::A){
-        let move_dir = Quat::from_axis_angle(Vec3::new(0.,0.,1.), FRAC_PI_2) * move_dir;
+        move_dir = Quat::from_axis_angle(Vec3::new(0.,0.,1.), FRAC_PI_2) * forward(&transform) + move_dir;
+        move_dir = move_dir.normalize();
+        move_requested = true;
+    }
+
+    else if keyboard.pressed(KeyCode::D){
+        move_dir = Quat::from_axis_angle(Vec3::new(0.,0.,1.), FRAC_PI_2) * forward(&transform) * -1. + move_dir;
+        move_dir = move_dir.normalize();
+        move_requested = true;
+    }
+    if move_requested {
         transform.translation += player.speed * time.delta_seconds() * TILE_SIZE * move_dir;
     }
-    if keyboard.pressed(KeyCode::D){
-        let move_dir = Quat::from_axis_angle(Vec3::new(0.,0.,1.), FRAC_PI_2) * move_dir;
-        transform.translation -= player.speed * time.delta_seconds() * TILE_SIZE * move_dir;
-    }
+
     if keyboard.pressed(KeyCode::E){
         transform.rotate(Quat::from_axis_angle(Vec3::new(0.,0.,1.), 0.1))
     }
