@@ -4,13 +4,17 @@ use bevy::prelude::*;
 use bevy::render::camera::{ScalingMode};
 use bevy::window::{PresentMode, WindowPlugin};
 use env_logger;
+use bevy_mouse_tracking_plugin::MousePosPlugin;
+
 
 use crate::ascii::AsciiPlugin;
 use crate::debug::DebugPlugin;
 use crate::player::PlayerPlugin;
 use crate::tilemap::TileMapPlugin;
 use crate::camera::CameraPlugin;
-use bevy_mouse_tracking_plugin::MousePosPlugin;
+use bevy_rapier2d::plugin::{RapierPhysicsPlugin, NoUserData};
+use bevy_rapier2d::prelude::RapierDebugRenderPlugin;
+
 
 mod player;
 mod debug;
@@ -39,6 +43,8 @@ fn main() {
         .add_plugin(DebugPlugin)
         .add_plugin(AsciiPlugin)
         .add_plugin(TileMapPlugin)
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_plugin(RapierDebugRenderPlugin::default())
         .run();
 }
 
