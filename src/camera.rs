@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 use crate::RESOLUTION;
-use bevy::render::camera::ScalingMode;
+use bevy::render::camera::{ScalingMode, RenderTarget, Camera2d};
+use bevy_mouse_tracking_plugin::MainCamera;
 
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_camera);
+        app
+            .add_startup_system(spawn_camera);
     }
 }
 
@@ -20,5 +22,6 @@ fn spawn_camera(mut commands: Commands){
 
     camera.orthographic_projection.scaling_mode = ScalingMode::None;
 
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(camera).insert(MainCamera);
 }
+
