@@ -8,6 +8,9 @@ use std::f32::consts::FRAC_PI_2;
 use crate::ascii::{AsciiSheet, spawn_ascii_sprite};
 use crate::TILE_SIZE;
 use bevy_mouse_tracking_plugin::MousePosWorld;
+use bevy::input::mouse::MouseButtonInput;
+use bevy::input::ElementState;
+use bevy_rapier2d::prelude::*;
 
 pub struct PlayerPlugin;
 
@@ -55,11 +58,11 @@ fn forward(transform: &Transform) -> Vec3 {
 }
 
 fn player_movement(
-    mut player_query: Query<(&Player, &mut Transform)>,
+    mut player_query: Query<(&Player, &mut Transform, &mut Velocity)>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>
 ){
-    let (player, mut transform): (&Player, Mut<Transform>) = player_query.single_mut();
+    let (player, mut transform, mut rb_vels): (&Player, Mut<Transform>, Mut<Velocity>) = player_query.single_mut();
 
     let mut move_dir = transform.rotation * Vec3::new(0., 0., 0.);
     let mut move_requested = false;
@@ -85,7 +88,11 @@ fn player_movement(
         move_requested = true;
     }
     if move_requested {
-        transform.translation += player.speed * time.delta_seconds() * TILE_SIZE * move_dir;
+        rb_vels.linvel = move_dir.truncate() * player.speed;
+        // transform.translation += player.speed * time.delta_seconds() * TILE_SIZE * move_dir;
+    }
+    else {
+        rb_vels.linvel = Vect::splat(0.0);
     }
 
     if keyboard.pressed(KeyCode::E){
@@ -105,24 +112,21 @@ fn camera_follow(
 }
 
 
-pub fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>){
+pub fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>, mut rapier_config: ResMut<RapierConfiguration>){
+    rapier_config.gravity = Vec2::ZERO;
+
     let player = spawn_ascii_sprite(
         &mut commands, &ascii, 1, Color::rgb(0.3, 0.3, 0.9),
-        Vec3::new(0.0,0.0,900.)
+        Some(Vec2::splat(TILE_SIZE)),
+        Vec3::new(0.0,0.0,900.),
     );
+
+
     commands.entity(player)
         .insert(Name::new("Player"))
-        .insert(Player{ speed: 3.0 })
+        .insert(Player{ speed: 1.0 })
+        .insert(RigidBody::Dynamic)
+        .insert(Velocity::zero())
+        .insert(Collider::cuboid(TILE_SIZE/2.0, TILE_SIZE/2.0))
         .id();
-
-    let bg = spawn_ascii_sprite(
-        &mut commands, &ascii, 0, Color::rgb(0.5, 0.5, 0.5),
-        Vec3::new(0.,0.,900.0)
-    );
-
-    commands.entity(bg)
-        .insert(Name::new("PlayerBackground"))
-        .id();
-
-    commands.entity(player).push_children(&[bg]);
 }
