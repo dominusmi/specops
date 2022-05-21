@@ -16,13 +16,14 @@ pub fn spawn_ascii_sprite(
     ascii: &AsciiSheet,
     index: usize,
     color: Color,
+    size: Option<Vec2>,
     translation: Vec3,
 ) -> Entity {
     assert!(index < 256, "Index out of Ascii Range");
 
     let mut sprite = TextureAtlasSprite::new(index);
     sprite.color = color;
-    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+    sprite.custom_size = size;
 
     commands
         .spawn_bundle(SpriteSheetBundle {
